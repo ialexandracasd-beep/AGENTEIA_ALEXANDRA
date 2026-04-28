@@ -1,0 +1,8 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { env } from './env';
+
+export const genAI = new GoogleGenerativeAI(env.gemini.apiKey);
+
+export const geminiModel = genAI.getGenerativeModel({
+  model: env.gemini.model,
+});

@@ -1,0 +1,77 @@
+{
+  "version": "1.0",
+  "nombre": "Checklist de Revisión Metodológica - AgenteIA Alexandra",
+  "descripcion": "Criterios de evaluación para trabajos de investigación en metodología",
+  "categorias": [
+    {
+      "id": "estructura",
+      "nombre": "Estructura del Documento",
+      "peso": 20,
+      "criterios": [
+        { "id": "E01", "descripcion": "El documento tiene título claro y preciso", "tipo": "boolean", "requerido": true },
+        { "id": "E02", "descripcion": "Incluye resumen o abstract (150-250 palabras)", "tipo": "boolean", "requerido": true },
+        { "id": "E03", "descripcion": "Tiene introducción con contexto y justificación", "tipo": "boolean", "requerido": true },
+        { "id": "E04", "descripcion": "Presenta objetivos general y específicos diferenciados", "tipo": "boolean", "requerido": true },
+        { "id": "E05", "descripcion": "Incluye marco teórico o revisión de literatura", "tipo": "boolean", "requerido": true },
+        { "id": "E06", "descripcion": "Tiene sección de metodología", "tipo": "boolean", "requerido": true },
+        { "id": "E07", "descripcion": "Incluye resultados o desarrollo del trabajo", "tipo": "boolean", "requerido": true },
+        { "id": "E08", "descripcion": "Tiene conclusiones que responden a los objetivos", "tipo": "boolean", "requerido": true },
+        { "id": "E09", "descripcion": "Incluye bibliografía o referencias", "tipo": "boolean", "requerido": true }
+      ]
+    },
+    {
+      "id": "objetivos",
+      "nombre": "Planteamiento de Objetivos",
+      "peso": 15,
+      "criterios": [
+        { "id": "O01", "descripcion": "El objetivo general usa verbo en infinitivo", "tipo": "boolean", "requerido": true },
+        { "id": "O02", "descripcion": "Los objetivos específicos son medibles y alcanzables", "tipo": "boolean", "requerido": true },
+        { "id": "O03", "descripcion": "Los objetivos específicos se derivan del objetivo general", "tipo": "boolean", "requerido": true },
+        { "id": "O04", "descripcion": "Los objetivos guardan coherencia con el problema de investigación", "tipo": "boolean", "requerido": true }
+      ]
+    },
+    {
+      "id": "metodologia",
+      "nombre": "Rigor Metodológico",
+      "peso": 30,
+      "criterios": [
+        { "id": "M01", "descripcion": "Indica el enfoque de investigación (cuantitativo/cualitativo/mixto)", "tipo": "boolean", "requerido": true },
+        { "id": "M02", "descripcion": "Justifica el tipo de investigación seleccionado", "tipo": "boolean", "requerido": true },
+        { "id": "M03", "descripcion": "Describe la población y muestra", "tipo": "boolean", "requerido": false },
+        { "id": "M04", "descripcion": "Explica los instrumentos o técnicas de recolección de datos", "tipo": "boolean", "requerido": true },
+        { "id": "M05", "descripcion": "Describe el procedimiento de análisis de datos", "tipo": "boolean", "requerido": true },
+        { "id": "M06", "descripcion": "Considera aspectos éticos de la investigación", "tipo": "boolean", "requerido": false }
+      ]
+    },
+    {
+      "id": "coherencia",
+      "nombre": "Coherencia Interna",
+      "peso": 20,
+      "criterios": [
+        { "id": "C01", "descripcion": "Los resultados responden a los objetivos planteados", "tipo": "escala", "escala_max": 5, "requerido": true },
+        { "id": "C02", "descripcion": "Las conclusiones se basan en los resultados obtenidos", "tipo": "escala", "escala_max": 5, "requerido": true },
+        { "id": "C03", "descripcion": "El marco teórico sustenta la metodología elegida", "tipo": "escala", "escala_max": 5, "requerido": true },
+        { "id": "C04", "descripcion": "El problema, objetivos y metodología están alineados", "tipo": "escala", "escala_max": 5, "requerido": true }
+      ]
+    },
+    {
+      "id": "referencias",
+      "nombre": "Referencias Bibliográficas",
+      "peso": 15,
+      "criterios": [
+        { "id": "R01", "descripcion": "Las referencias tienen formato normalizado (APA, MLA u otro)", "tipo": "boolean", "requerido": true },
+        { "id": "R02", "descripcion": "Las fuentes citadas en el texto aparecen en la bibliografía", "tipo": "boolean", "requerido": true },
+        { "id": "R03", "descripcion": "Las fuentes son pertinentes y actualizadas (últimos 10 años)", "tipo": "escala", "escala_max": 5, "requerido": false },
+        { "id": "R04", "descripcion": "Incluye fuentes académicas (artículos, libros, tesis)", "tipo": "boolean", "requerido": true }
+      ]
+    }
+  ],
+  "puntaje_aprobacion": 70,
+  "escala_calificacion": {
+    "90-100": "Excelente",
+    "80-89": "Muy bueno",
+    "70-79": "Bueno",
+    "60-69": "Requiere mejoras",
+    "0-59": "Insuficiente"
+  }
+}
