@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { api } from '../lib/api';
+import { useState, type FormEvent } from 'react';
+import { submitReview } from '../lib/api';
 
 interface ReviewPanelProps {
   studentId: string;
@@ -13,14 +13,14 @@ export default function ReviewPanel({ studentId, spreadsheetId }: ReviewPanelPro
   const [entrega, setEntrega] = useState('');
   const [reviewType, setReviewType] = useState<'structural' | 'methodological' | 'full'>('full');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<unknown>(null);
+  const [result, setResult] = useState<Record<string, unknown> | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      const data = await api.submitReview({ studentId, spreadsheetId, documentText, documentUrl, entrega, reviewType });
-      setResult(data);
+      const data = await submitReview({ studentId, spreadsheetId, documentText, documentUrl, entrega, reviewType });
+      setResult(data as Record<string, unknown>);
     } catch (err) {
       console.error(err);
     } finally {
@@ -77,7 +77,7 @@ export default function ReviewPanel({ studentId, spreadsheetId }: ReviewPanelPro
       >
         {loading ? 'Procesando...' : 'Enviar a revisión'}
       </button>
-      {result && (
+      {result !== null && (
         <pre style={{ background: '#f1f5f9', padding: '1rem', borderRadius: '6px', overflow: 'auto', fontSize: '0.8rem' }}>
           {JSON.stringify(result, null, 2)}
         </pre>
