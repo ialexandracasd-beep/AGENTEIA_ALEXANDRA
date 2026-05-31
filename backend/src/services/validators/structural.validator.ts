@@ -1,8 +1,12 @@
 import { z } from 'zod';
 
 export const createStudentSchema = z.object({
-  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  email: z.string().email('Email inválido'),
+  nombre: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+  correo_institucional: z.string().email('Correo institucional inválido'),
+  nombre_mama: z.string().optional().nullable(),
+  correo_mama: z.string().email('Correo de mamá inválido').optional().nullable(),
+  nombre_papa: z.string().optional().nullable(),
+  correo_papa: z.string().email('Correo de papá inválido').optional().nullable(),
 });
 
 export const reviewRequestSchema = z.object({

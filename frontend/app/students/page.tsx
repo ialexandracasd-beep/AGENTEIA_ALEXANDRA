@@ -11,7 +11,7 @@ export default async function StudentsPage() {
   try {
     students = await listStudents();
   } catch (err) {
-    error = err instanceof Error ? err.message : 'Error al cargar estudiantes';
+    error = err instanceof Error ? err.message : 'Error desconocido al cargar estudiantes';
   }
 
   return (
@@ -27,7 +27,14 @@ export default async function StudentsPage() {
       </h2>
 
       {error ? (
-        <p style={{ color: '#dc2626' }}>Error: {error}</p>
+        <div style={alertStyles.box}>
+          <p style={alertStyles.title}>No se pudieron cargar los estudiantes</p>
+          <p style={alertStyles.detail}>{error}</p>
+          <p style={alertStyles.hint}>
+            Si el error menciona &quot;timeout&quot; o &quot;fetch failed&quot;, el servidor puede
+            estar iniciando (free tier). Recarga la página en 30 segundos.
+          </p>
+        </div>
       ) : students.length === 0 ? (
         <p style={{ color: '#64748b' }}>No hay estudiantes registrados aún.</p>
       ) : (
@@ -42,11 +49,11 @@ export default async function StudentsPage() {
           <tbody>
             {students.map((s) => (
               <tr key={s.id} style={tableStyles.tr}>
-                <td style={tableStyles.td}>{s.name}</td>
-                <td style={tableStyles.td}>{s.email}</td>
+                <td style={tableStyles.td}>{s.nombre}</td>
+                <td style={tableStyles.td}>{s.correo_institucional}</td>
                 <td style={tableStyles.td}>
-                  {s.driveFolder ? (
-                    <a href={s.driveFolder} target="_blank" rel="noreferrer" style={tableStyles.link}>
+                  {s.drive_folder_id ? (
+                    <a href={s.drive_folder_id} target="_blank" rel="noreferrer" style={tableStyles.link}>
                       Abrir
                     </a>
                   ) : (
@@ -54,8 +61,8 @@ export default async function StudentsPage() {
                   )}
                 </td>
                 <td style={tableStyles.td}>
-                  {s.sheetUrl ? (
-                    <a href={s.sheetUrl} target="_blank" rel="noreferrer" style={tableStyles.link}>
+                  {s.sheet_url ? (
+                    <a href={s.sheet_url} target="_blank" rel="noreferrer" style={tableStyles.link}>
                       Ver hoja
                     </a>
                   ) : (
@@ -63,7 +70,7 @@ export default async function StudentsPage() {
                   )}
                 </td>
                 <td style={tableStyles.td}>
-                  {new Date(s.createdAt).toLocaleDateString('es-MX')}
+                  {s.created_at ? new Date(s.created_at).toLocaleDateString('es-MX') : '—'}
                 </td>
               </tr>
             ))}
@@ -73,6 +80,19 @@ export default async function StudentsPage() {
     </div>
   );
 }
+
+const alertStyles: Record<string, CSSProperties> = {
+  box: {
+    padding: '1rem 1.25rem',
+    background: '#fef2f2',
+    border: '1px solid #fecaca',
+    borderRadius: '8px',
+    maxWidth: '600px',
+  },
+  title: { margin: 0, fontWeight: 600, color: '#dc2626' },
+  detail: { margin: '0.4rem 0 0', fontSize: '0.875rem', color: '#dc2626', fontFamily: 'monospace' },
+  hint: { margin: '0.75rem 0 0', fontSize: '0.8rem', color: '#64748b' },
+};
 
 const tableStyles: Record<string, CSSProperties> = {
   table: {

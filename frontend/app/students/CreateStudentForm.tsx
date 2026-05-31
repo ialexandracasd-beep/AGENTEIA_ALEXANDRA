@@ -6,7 +6,7 @@ import { createStudent, type CreateStudentPayload } from '@/lib/api';
 
 export default function CreateStudentForm() {
   const router = useRouter();
-  const [form, setForm] = useState<CreateStudentPayload>({ name: '', email: '' });
+  const [form, setForm] = useState<CreateStudentPayload>({ nombre: '', correo_institucional: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -24,10 +24,11 @@ export default function CreateStudentForm() {
     try {
       await createStudent(form);
       setSuccess(true);
-      setForm({ name: '', email: '' });
+      setForm({ nombre: '', correo_institucional: '' });
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear estudiante');
+      const msg = err instanceof Error ? err.message : 'Error desconocido';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -38,10 +39,10 @@ export default function CreateStudentForm() {
       <h2 style={styles.heading}>Nuevo estudiante</h2>
 
       <label style={styles.label}>
-        Nombre
+        Nombre completo
         <input
-          name="name"
-          value={form.name}
+          name="nombre"
+          value={form.nombre}
           onChange={handleChange}
           required
           disabled={loading}
@@ -51,15 +52,15 @@ export default function CreateStudentForm() {
       </label>
 
       <label style={styles.label}>
-        Correo
+        Correo institucional
         <input
-          name="email"
+          name="correo_institucional"
           type="email"
-          value={form.email}
+          value={form.correo_institucional}
           onChange={handleChange}
           required
           disabled={loading}
-          placeholder="Ej. maria@uni.edu"
+          placeholder="Ej. maria@universidad.edu"
           style={styles.input}
         />
       </label>

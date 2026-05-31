@@ -7,9 +7,9 @@ export async function getStudentSheetData(req: Request, res: Response) {
   try {
     const student = await getStudentById(req.params.studentId);
     if (!student) return sendNotFound(res, 'Estudiante');
-    if (!student.sheetId) return sendError(res, 'El estudiante no tiene sheet asignado', 400);
+    if (!student.sheet_id) return sendError(res, 'El estudiante no tiene sheet asignado', 400);
 
-    const rows = await getSheetData(student.sheetId);
+    const rows = await getSheetData(student.sheet_id);
     sendSuccess(res, rows);
   } catch (err) {
     sendError(res, (err as Error).message);

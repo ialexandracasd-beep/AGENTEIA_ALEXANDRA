@@ -1,21 +1,43 @@
 -- ============================================================
 -- AgenteIA Alexandra — SQL inicial para Supabase
--- Ejecutar en el SQL Editor de Supabase (orden secuencial)
+-- Columnas de students alineadas con docs/students/estudiantes_base.xlsx
+-- Ejecutar en: Supabase → SQL Editor (es idempotente)
 -- ============================================================
 
--- 1. STUDENTS
+
+-- ============================================================
+-- 1. STUDENTS  (fuente: estudiantes_base.xlsx)
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS students (
-  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name             TEXT NOT NULL,
-  email            TEXT NOT NULL UNIQUE,
-  drive_folder_id  TEXT,
-  sheet_id         TEXT,
-  sheet_url        TEXT,
-  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id                    UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  -- Columnas del Excel
+  nombre                TEXT        NOT NULL,
+  correo_institucional  TEXT        NOT NULL,
+  nombre_mama           TEXT,
+  correo_mama           TEXT,
+  nombre_papa           TEXT,
+  correo_papa           TEXT,
+
+  -- Metadatos de integración Google
+  drive_folder_id       TEXT,
+  sheet_id              TEXT,
+  sheet_url             TEXT,
+
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Clave lógica: no puede haber dos estudiantes con el mismo correo
+CREATE UNIQUE INDEX IF NOT EXISTS students_correo_institucional_idx
+  ON students (correo_institucional);
+
+
+-- ============================================================
 -- 2. STUDENT SHEETS
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS student_sheets (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id       UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -25,7 +47,11 @@ CREATE TABLE IF NOT EXISTS student_sheets (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+
+-- ============================================================
 -- 3. SHEET SUBMISSIONS
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS sheet_submissions (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id       UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -36,7 +62,11 @@ CREATE TABLE IF NOT EXISTS sheet_submissions (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+
+-- ============================================================
 -- 4. STRUCTURE REVIEWS
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS structure_reviews (
   id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id         UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -48,18 +78,23 @@ CREATE TABLE IF NOT EXISTS structure_reviews (
   has_methodology    BOOLEAN NOT NULL DEFAULT FALSE,
   has_conclusions    BOOLEAN NOT NULL DEFAULT FALSE,
   has_bibliography   BOOLEAN NOT NULL DEFAULT FALSE,
-  missing_elements   TEXT[] NOT NULL DEFAULT '{}',
+  missing_elements   TEXT[]  NOT NULL DEFAULT '{}',
   score              NUMERIC(5,2) NOT NULL DEFAULT 0,
   observations       TEXT,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 5. AI REVIEWS (Gemini)
+
+-- ============================================================
+-- 5. AI REVIEWS  (Gemini)
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS ai_reviews (
   id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id             UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
   submission_id          UUID REFERENCES sheet_submissions(id) ON DELETE SET NULL,
-  review_type            TEXT NOT NULL CHECK (review_type IN ('structural', 'methodological', 'full')),
+  review_type            TEXT NOT NULL
+                           CHECK (review_type IN ('structural', 'methodological', 'full')),
   coherence_score        NUMERIC(4,2),
   objectives_aligned     BOOLEAN,
   methodology_justified  BOOLEAN,
@@ -74,7 +109,11 @@ CREATE TABLE IF NOT EXISTS ai_reviews (
   created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+
+-- ============================================================
 -- 6. FINAL RESULTS
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS final_results (
   id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id            UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -89,8 +128,10 @@ CREATE TABLE IF NOT EXISTS final_results (
   updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+
 -- ============================================================
--- TRIGGER: updated_at automático
+-- FUNCIÓN + TRIGGERS: updated_at automático
+-- DROP TRIGGER IF EXISTS garantiza idempotencia al re-ejecutar
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION update_updated_at()
@@ -101,6 +142,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS students_updated_at      ON students;
+DROP TRIGGER IF EXISTS final_results_updated_at ON final_results;
+
 CREATE TRIGGER students_updated_at
   BEFORE UPDATE ON students
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
@@ -109,13 +153,14 @@ CREATE TRIGGER final_results_updated_at
   BEFORE UPDATE ON final_results
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+
 -- ============================================================
 -- ÍNDICES para consultas frecuentes
 -- ============================================================
 
-CREATE INDEX IF NOT EXISTS idx_student_sheets_student_id    ON student_sheets(student_id);
-CREATE INDEX IF NOT EXISTS idx_sheet_submissions_student_id ON sheet_submissions(student_id);
-CREATE INDEX IF NOT EXISTS idx_structure_reviews_student_id ON structure_reviews(student_id);
-CREATE INDEX IF NOT EXISTS idx_ai_reviews_student_id        ON ai_reviews(student_id);
-CREATE INDEX IF NOT EXISTS idx_ai_reviews_status            ON ai_reviews(status);
-CREATE INDEX IF NOT EXISTS idx_final_results_student_id     ON final_results(student_id);
+CREATE INDEX IF NOT EXISTS idx_student_sheets_student_id     ON student_sheets(student_id);
+CREATE INDEX IF NOT EXISTS idx_sheet_submissions_student_id  ON sheet_submissions(student_id);
+CREATE INDEX IF NOT EXISTS idx_structure_reviews_student_id  ON structure_reviews(student_id);
+CREATE INDEX IF NOT EXISTS idx_ai_reviews_student_id         ON ai_reviews(student_id);
+CREATE INDEX IF NOT EXISTS idx_ai_reviews_status             ON ai_reviews(status);
+CREATE INDEX IF NOT EXISTS idx_final_results_student_id      ON final_results(student_id);

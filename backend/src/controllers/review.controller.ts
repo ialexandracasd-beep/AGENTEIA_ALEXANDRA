@@ -12,11 +12,11 @@ export async function submitReview(req: Request, res: Response) {
 
     const student = await getStudentById(parsed.data.studentId);
     if (!student) return sendNotFound(res, 'Estudiante');
-    if (!student.sheetId) return sendError(res, 'El estudiante no tiene sheet asignado', 400);
+    if (!student.sheet_id) return sendError(res, 'El estudiante no tiene sheet asignado', 400);
 
     const review = await reviewSubmissionFlow({
       ...parsed.data,
-      spreadsheetId: student.sheetId,
+      spreadsheetId: student.sheet_id,
     });
 
     sendSuccess(res, review, 201);

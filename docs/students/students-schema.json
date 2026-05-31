@@ -1,0 +1,41 @@
+{
+  "description": "Esquema de columnas para la base de estudiantes (sincronizado con estudiantes_base.xlsx)",
+  "columns": [
+    {
+      "name": "NOMBRE",
+      "key": "nombre",
+      "type": "string",
+      "description": "Nombre completo del estudiante"
+    },
+    {
+      "name": "CORREO INSTITUCIONAL",
+      "key": "correoInstitucional",
+      "type": "string",
+      "description": "Correo institucional del estudiante, usado como identificador único"
+    },
+    {
+      "name": "NOMBRE MAMÁ",
+      "key": "nombreMama",
+      "type": "string",
+      "description": "Nombre completo de la madre del estudiante"
+    },
+    {
+      "name": "CORREO MAMÁ",
+      "key": "correoMama",
+      "type": "string",
+      "description": "Correo electrónico de la madre del estudiante"
+    },
+    {
+      "name": "NOMBRE  PAPÁ",
+      "key": "nombrePapa",
+      "type": "string",
+      "description": "Nombre completo del padre del estudiante"
+    },
+    {
+      "name": "CORREO PAPÁ",
+      "key": "correoPapa",
+      "type": "string",
+      "description": "Correo electrónico del padre del estudiante"
+    }
+  ]
+}

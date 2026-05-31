@@ -2,7 +2,7 @@ import { supabase } from '../../config/supabase';
 import { Student, CreateStudentDto } from '../../types/student.types';
 import { StructuralResult, MethodologicalResult, ReviewResult, ReviewType } from '../../types/review.types';
 
-// --- Students ---
+// ── Students ──────────────────────────────────────────────────────────────────
 
 export async function createStudent(
   dto: CreateStudentDto & { drive_folder_id?: string; sheet_id?: string; sheet_url?: string }
@@ -10,17 +10,21 @@ export async function createStudent(
   const { data, error } = await supabase
     .from('students')
     .insert({
-      name: dto.name,
-      email: dto.email,
-      drive_folder_id: dto.drive_folder_id,
-      sheet_id: dto.sheet_id,
-      sheet_url: dto.sheet_url,
+      nombre: dto.nombre,
+      correo_institucional: dto.correo_institucional,
+      nombre_mama: dto.nombre_mama ?? null,
+      correo_mama: dto.correo_mama ?? null,
+      nombre_papa: dto.nombre_papa ?? null,
+      correo_papa: dto.correo_papa ?? null,
+      drive_folder_id: dto.drive_folder_id ?? null,
+      sheet_id: dto.sheet_id ?? null,
+      sheet_url: dto.sheet_url ?? null,
     })
     .select()
     .single();
 
   if (error) throw new Error(error.message);
-  return mapStudent(data);
+  return data as Student;
 }
 
 export async function getStudentById(id: string): Promise<Student | null> {
@@ -31,17 +35,17 @@ export async function getStudentById(id: string): Promise<Student | null> {
     .single();
 
   if (error) return null;
-  return mapStudent(data);
+  return data as Student;
 }
 
 export async function getAllStudents(): Promise<Student[]> {
   const { data, error } = await supabase
     .from('students')
     .select('*')
-    .order('name');
+    .order('nombre');
 
   if (error) throw new Error(error.message);
-  return (data ?? []).map(mapStudent);
+  return (data ?? []) as Student[];
 }
 
 export async function updateStudentSheet(
@@ -52,26 +56,13 @@ export async function updateStudentSheet(
 ) {
   const { error } = await supabase
     .from('students')
-    .update({ sheet_id: sheetId, drive_folder_id: folderId, sheet_url: sheetUrl })
+    .update({ sheet_id: sheetId, drive_folder_id: folderId, sheet_url: sheetUrl ?? null })
     .eq('id', studentId);
 
   if (error) throw new Error(error.message);
 }
 
-function mapStudent(row: Record<string, unknown>): Student {
-  return {
-    id: row.id as string,
-    name: row.name as string,
-    email: row.email as string,
-    driveFolder: row.drive_folder_id as string | undefined,
-    sheetId: row.sheet_id as string | undefined,
-    sheetUrl: row.sheet_url as string | undefined,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  };
-}
-
-// --- Structure Reviews ---
+// ── Structure Reviews ─────────────────────────────────────────────────────────
 
 export async function saveStructuralReview(
   studentId: string,
@@ -101,7 +92,7 @@ export async function saveStructuralReview(
   return data;
 }
 
-// --- AI Reviews ---
+// ── AI Reviews ────────────────────────────────────────────────────────────────
 
 export async function saveAiReview(
   studentId: string,

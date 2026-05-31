@@ -34,3 +34,6 @@ Thumbs.db
 # Next.js
 next-env.d.ts
 .env*.local
+
+# Base de estudiantes (datos reales, no subir al repo)
+docs/students/estudiantes_base.xlsx
