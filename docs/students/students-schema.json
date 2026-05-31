@@ -9,33 +9,39 @@
     },
     {
       "name": "CORREO INSTITUCIONAL",
-      "key": "correoInstitucional",
+      "key": "correo_institucional",
       "type": "string",
-      "description": "Correo institucional del estudiante, usado como identificador único"
+      "description": "Correo institucional del estudiante, identificador único"
     },
     {
       "name": "NOMBRE MAMÁ",
-      "key": "nombreMama",
+      "key": "nombre_mama",
       "type": "string",
       "description": "Nombre completo de la madre del estudiante"
     },
     {
       "name": "CORREO MAMÁ",
-      "key": "correoMama",
+      "key": "correo_mama",
       "type": "string",
       "description": "Correo electrónico de la madre del estudiante"
     },
     {
       "name": "NOMBRE  PAPÁ",
-      "key": "nombrePapa",
+      "key": "nombre_papa",
       "type": "string",
       "description": "Nombre completo del padre del estudiante"
     },
     {
       "name": "CORREO PAPÁ",
-      "key": "correoPapa",
+      "key": "correo_papa",
       "type": "string",
       "description": "Correo electrónico del padre del estudiante"
+    },
+    {
+      "name": "ID_DRIVE",
+      "key": "id_drive",
+      "type": "string",
+      "description": "ID o URL de la carpeta de Google Drive que el bot debe auditar"
     }
   ]
 }

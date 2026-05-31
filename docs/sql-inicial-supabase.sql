@@ -6,7 +6,17 @@
 
 
 -- ============================================================
+-- MIGRACIÓN: añadir id_drive a una tabla ya existente
+-- Ejecutar solo si la tabla ya existe sin esa columna.
+-- Es idempotente gracias a IF NOT EXISTS.
+-- ============================================================
+
+ALTER TABLE students ADD COLUMN IF NOT EXISTS id_drive TEXT;
+
+
+-- ============================================================
 -- 1. STUDENTS  (fuente: estudiantes_base.xlsx)
+-- Para instalaciones frescas; no afecta si la tabla ya existe.
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS students (
@@ -19,8 +29,9 @@ CREATE TABLE IF NOT EXISTS students (
   correo_mama           TEXT,
   nombre_papa           TEXT,
   correo_papa           TEXT,
+  id_drive              TEXT,
 
-  -- Metadatos de integración Google
+  -- Metadatos de integración Google (gestionados por el sistema)
   drive_folder_id       TEXT,
   sheet_id              TEXT,
   sheet_url             TEXT,

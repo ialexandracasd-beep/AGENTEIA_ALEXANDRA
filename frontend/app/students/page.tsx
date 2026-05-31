@@ -41,7 +41,7 @@ export default async function StudentsPage() {
         <table style={tableStyles.table}>
           <thead>
             <tr>
-              {['Nombre', 'Correo', 'Carpeta Drive', 'Hoja', 'Creado'].map((h) => (
+              {['Nombre', 'Correo', 'Drive Auditoría', 'Hoja', 'Creado'].map((h) => (
                 <th key={h} style={tableStyles.th}>{h}</th>
               ))}
             </tr>
@@ -52,8 +52,8 @@ export default async function StudentsPage() {
                 <td style={tableStyles.td}>{s.nombre}</td>
                 <td style={tableStyles.td}>{s.correo_institucional}</td>
                 <td style={tableStyles.td}>
-                  {s.drive_folder_id ? (
-                    <a href={s.drive_folder_id} target="_blank" rel="noreferrer" style={tableStyles.link}>
+                  {s.id_drive ? (
+                    <a href={s.id_drive} target="_blank" rel="noreferrer" style={tableStyles.link}>
                       Abrir
                     </a>
                   ) : (

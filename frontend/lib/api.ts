@@ -74,6 +74,7 @@ export interface StudentDTO {
   correo_mama: string | null;
   nombre_papa: string | null;
   correo_papa: string | null;
+  id_drive: string | null;
   drive_folder_id: string | null;
   sheet_id: string | null;
   sheet_url: string | null;
@@ -88,6 +89,7 @@ export interface CreateStudentPayload {
   correo_mama?: string | null;
   nombre_papa?: string | null;
   correo_papa?: string | null;
+  id_drive?: string | null;
 }
 
 export function listStudents(): Promise<StudentDTO[]> {

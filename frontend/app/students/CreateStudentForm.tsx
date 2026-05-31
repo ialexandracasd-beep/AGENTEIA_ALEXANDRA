@@ -6,13 +6,14 @@ import { createStudent, type CreateStudentPayload } from '@/lib/api';
 
 export default function CreateStudentForm() {
   const router = useRouter();
-  const [form, setForm] = useState<CreateStudentPayload>({ nombre: '', correo_institucional: '' });
+  const [form, setForm] = useState<CreateStudentPayload>({ nombre: '', correo_institucional: '', id_drive: null });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value === '' ? null : value }));
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -24,7 +25,7 @@ export default function CreateStudentForm() {
     try {
       await createStudent(form);
       setSuccess(true);
-      setForm({ nombre: '', correo_institucional: '' });
+      setForm({ nombre: '', correo_institucional: '', id_drive: null });
       router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error desconocido';
@@ -61,6 +62,18 @@ export default function CreateStudentForm() {
           required
           disabled={loading}
           placeholder="Ej. maria@universidad.edu"
+          style={styles.input}
+        />
+      </label>
+
+      <label style={styles.label}>
+        ID Drive (opcional)
+        <input
+          name="id_drive"
+          value={form.id_drive ?? ''}
+          onChange={handleChange}
+          disabled={loading}
+          placeholder="https://drive.google.com/drive/folders/..."
           style={styles.input}
         />
       </label>

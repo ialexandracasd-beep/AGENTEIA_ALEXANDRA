@@ -16,6 +16,7 @@ export async function createStudent(
       correo_mama: dto.correo_mama ?? null,
       nombre_papa: dto.nombre_papa ?? null,
       correo_papa: dto.correo_papa ?? null,
+      id_drive: dto.id_drive ?? null,
       drive_folder_id: dto.drive_folder_id ?? null,
       sheet_id: dto.sheet_id ?? null,
       sheet_url: dto.sheet_url ?? null,
