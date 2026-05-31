@@ -141,6 +141,27 @@ CREATE TABLE IF NOT EXISTS final_results (
 
 
 -- ============================================================
+-- 7. DRIVE AUDITS  (auditoría de carpetas Google Drive)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS drive_audits (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id    UUID        NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  folder_id     TEXT        NOT NULL,
+  file_count    INTEGER     NOT NULL DEFAULT 0,
+  spreadsheets  JSONB       NOT NULL DEFAULT '[]',
+  pdfs          JSONB       NOT NULL DEFAULT '[]',
+  other_files   JSONB       NOT NULL DEFAULT '[]',
+  checks        JSONB       NOT NULL DEFAULT '{}',
+  status        TEXT        NOT NULL DEFAULT 'empty'
+                  CHECK (status IN ('approved', 'findings', 'empty')),
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_drive_audits_student_id ON drive_audits(student_id);
+
+
+-- ============================================================
 -- FUNCIÓN + TRIGGERS: updated_at automático
 -- DROP TRIGGER IF EXISTS garantiza idempotencia al re-ejecutar
 -- ============================================================

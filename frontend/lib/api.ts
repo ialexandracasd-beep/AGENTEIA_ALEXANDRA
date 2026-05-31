@@ -103,6 +103,37 @@ export function createStudent(payload: CreateStudentPayload): Promise<StudentDTO
   });
 }
 
+export function auditStudent(studentId: string): Promise<AuditStudentResponse> {
+  return request<AuditStudentResponse>(`/students/${studentId}/audit`, { method: 'POST' });
+}
+
+export interface DriveAuditFileInfo {
+  id: string;
+  name: string;
+  webViewLink?: string;
+}
+
+export interface DriveAuditResult {
+  folderId: string;
+  fileCount: number;
+  spreadsheets: DriveAuditFileInfo[];
+  pdfs: DriveAuditFileInfo[];
+  otherFiles: Array<DriveAuditFileInfo & { mimeType: string }>;
+  checks: {
+    hasAnyFile: boolean;
+    hasSpreadsheet: boolean;
+    hasPdf: boolean;
+  };
+  status: 'approved' | 'findings' | 'empty';
+  runAt: string;
+}
+
+export interface AuditStudentResponse {
+  studentId: string;
+  studentName: string;
+  audit: DriveAuditResult;
+}
+
 // ── Sheets ────────────────────────────────────────────────────────────────────
 
 export function getSheetData(studentId: string): Promise<unknown[][]> {
