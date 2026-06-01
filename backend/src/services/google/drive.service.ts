@@ -29,10 +29,25 @@ export async function grantPermission(fileId: string, email: string, role: 'read
   logger.info(`Permission ${role} granted to ${email} on ${fileId}`);
 }
 
-export async function listFilesInFolder(folderId: string) {
-  const response = await drive.files.list({
-    q: `'${folderId}' in parents and trashed = false`,
-    fields: 'files(id, name, mimeType, webViewLink)',
+export async function listFilesInFolder(folderId: string, signal?: AbortSignal) {
+  const listPromise = drive.files
+    .list({
+      q: `'${folderId}' in parents and trashed = false`,
+      fields: 'files(id, name, mimeType, webViewLink)',
+    })
+    .then(r => r.data.files ?? []);
+
+  if (!signal) return listPromise;
+
+  // Race the Drive call against the abort signal so el caller
+  // puede imponer un timeout sin depender de la API interna de gaxios.
+  const abortPromise = new Promise<never>((_, reject) => {
+    if (signal.aborted) {
+      reject(new Error('AbortError'));
+      return;
+    }
+    signal.addEventListener('abort', () => reject(new Error('AbortError')), { once: true });
   });
-  return response.data.files || [];
+
+  return Promise.race([listPromise, abortPromise]);
 }

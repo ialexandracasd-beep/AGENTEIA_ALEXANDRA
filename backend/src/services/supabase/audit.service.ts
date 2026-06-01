@@ -1,6 +1,8 @@
 import { supabase } from '../../config/supabase';
 import { DriveAuditResult, DriveAuditStatus } from '../../types/audit.types';
 
+const SUPABASE_TIMEOUT_MS = 10_000;
+
 export interface DriveAuditRow {
   id: string;
   student_id: string;
@@ -14,11 +16,24 @@ export interface DriveAuditRow {
   created_at: string;
 }
 
+// PromiseLike cubre tanto Promise como el thenable de Supabase (PostgrestBuilder)
+function withTimeout<T>(thenable: PromiseLike<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    Promise.resolve(thenable),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`${label} no respondió a tiempo (timeout ${ms / 1000} s)`)),
+        ms,
+      ),
+    ),
+  ]);
+}
+
 export async function saveAuditResult(
   studentId: string,
   result: DriveAuditResult,
 ): Promise<DriveAuditRow> {
-  const { data, error } = await supabase
+  const query = supabase
     .from('drive_audits')
     .insert({
       student_id: studentId,
@@ -33,12 +48,13 @@ export async function saveAuditResult(
     .select()
     .single();
 
+  const { data, error } = await withTimeout(query, SUPABASE_TIMEOUT_MS, 'Supabase');
   if (error) throw new Error(error.message);
   return data as DriveAuditRow;
 }
 
 export async function getLatestAudit(studentId: string): Promise<DriveAuditRow | null> {
-  const { data, error } = await supabase
+  const query = supabase
     .from('drive_audits')
     .select('*')
     .eq('student_id', studentId)
@@ -46,6 +62,7 @@ export async function getLatestAudit(studentId: string): Promise<DriveAuditRow |
     .limit(1)
     .single();
 
+  const { data, error } = await withTimeout(query, SUPABASE_TIMEOUT_MS, 'Supabase');
   if (error) return null;
   return data as DriveAuditRow;
 }

@@ -3,11 +3,26 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { env } from './config/env';
 import routes from './routes';
+import { logger } from './utils/logger';
 
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: env.corsOrigin }));
+
+// CORS: acepta lista de orígenes separados por coma en CORS_ORIGIN.
+// Permite también llamadas sin Origin (server-to-server, Postman, curl).
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (env.corsOrigins.includes(origin)) return callback(null, true);
+    logger.warn(`CORS blocked: ${origin}`);
+    return callback(new Error(`CORS: origen no permitido → ${origin}`));
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 

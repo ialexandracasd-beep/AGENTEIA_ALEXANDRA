@@ -3,6 +3,7 @@ import { DriveAuditResult, DriveAuditStatus } from '../../types/audit.types';
 
 const MIME_SPREADSHEET = 'application/vnd.google-apps.spreadsheet';
 const MIME_PDF = 'application/pdf';
+const DRIVE_TIMEOUT_MS = 15_000;
 
 export function extractFolderId(idOrUrl: string): string {
   const match = idOrUrl.match(/\/folders\/([a-zA-Z0-9_-]+)/);
@@ -11,7 +12,21 @@ export function extractFolderId(idOrUrl: string): string {
 
 export async function auditStudentFolder(idDrive: string): Promise<DriveAuditResult> {
   const folderId = extractFolderId(idDrive);
-  const files = await listFilesInFolder(folderId);
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), DRIVE_TIMEOUT_MS);
+
+  let files: Awaited<ReturnType<typeof listFilesInFolder>>;
+  try {
+    files = await listFilesInFolder(folderId, controller.signal);
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new Error('Google Drive no respondió a tiempo (timeout 15 s). Verifica que la cuenta de servicio tenga acceso a la carpeta.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 
   const spreadsheets = files
     .filter(f => f.mimeType === MIME_SPREADSHEET)

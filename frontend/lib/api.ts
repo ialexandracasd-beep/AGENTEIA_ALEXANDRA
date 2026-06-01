@@ -1,3 +1,7 @@
+// NEXT_PUBLIC_API_URL se incrusta en el bundle en tiempo de build de Vercel.
+// Si está vacía, el browser usará localhost y fallará en producción.
+// Setear en: Vercel → Project Settings → Environment Variables (Production)
+//   NEXT_PUBLIC_API_URL = https://agenteia-alexandra-0sfh.onrender.com
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const API_BASE = `${BASE_URL}/api`;
 

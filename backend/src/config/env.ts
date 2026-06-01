@@ -6,8 +6,11 @@ dotenv.config();
 const schema = z.object({
   PORT: z.string().default('3001'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  CORS_ORIGIN: z.string().default('http://localhost:5173'),
-  FRONTEND_URL: z.string().default('http://localhost:5173'),
+
+  // Acepta una o varias URLs separadas por coma.
+  // En Render setear: CORS_ORIGIN=https://agenteia-alexandra-nu.vercel.app,http://localhost:3000
+  CORS_ORIGIN: z.string().default('http://localhost:3000,http://localhost:3001'),
+  FRONTEND_URL: z.string().default('http://localhost:3000'),
 
   SUPABASE_URL: z.string().url('SUPABASE_URL debe ser una URL válida'),
   SUPABASE_ANON_KEY: z.string().min(1, 'SUPABASE_ANON_KEY es requerida'),
@@ -39,7 +42,8 @@ const raw = result.data;
 export const env = {
   port: Number(raw.PORT),
   nodeEnv: raw.NODE_ENV,
-  corsOrigin: raw.CORS_ORIGIN,
+  // Lista de orígenes permitidos (split por coma, trim de espacios)
+  corsOrigins: raw.CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean),
   frontendUrl: raw.FRONTEND_URL,
 
   supabase: {
@@ -51,7 +55,6 @@ export const env = {
   google: {
     projectId: raw.GOOGLE_PROJECT_ID,
     serviceAccountEmail: raw.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    // En .env el private key viene con \n literales — se restauran aquí
     privateKey: raw.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
     driveRootFolderId: raw.GOOGLE_DRIVE_ROOT_FOLDER_ID,
     templateSheetId: raw.GOOGLE_TEMPLATE_SHEET_ID,
