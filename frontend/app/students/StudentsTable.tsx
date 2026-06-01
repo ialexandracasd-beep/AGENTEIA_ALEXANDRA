@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { Fragment, useState, type CSSProperties } from 'react';
 import { auditStudent, type StudentDTO, type DriveAuditResult } from '@/lib/api';
 
 interface AuditState {
   loading: boolean;
   result: DriveAuditResult | null;
+  warning: string | null;
   error: string | null;
   expanded: boolean;
 }
@@ -26,11 +27,30 @@ const STATUS_COLOR: Record<DriveAuditResult['status'], CSSProperties> = {
   empty: { background: '#f1f5f9', color: '#64748b' },
 };
 
+function friendlyError(raw: string): string {
+  if (raw.includes('Sin acceso') || raw.includes('Comparte la carpeta') || raw.includes('cuenta de servicio')) {
+    return raw;
+  }
+  if (raw.includes('No se encontró la carpeta')) return raw;
+  if (raw.includes('tardó demasiado') || raw.includes('timeout') || raw.includes('no respondió')) {
+    return 'Google Drive tardó demasiado en responder. Intenta de nuevo en unos segundos.';
+  }
+  if (raw.includes('Failed to fetch') || raw.includes('localhost') || raw.includes('ECONNREFUSED')) {
+    return 'No se pudo conectar con el servidor. Recarga la página o intenta en unos minutos.';
+  }
+  if (raw.includes('HTTP 400')) return raw.replace('HTTP 400: ', '');
+  if (raw.includes('id_drive nulo') || raw.includes('no tiene carpeta')) {
+    return 'Este estudiante no tiene carpeta de Drive asignada.';
+  }
+  if (raw.includes('HTTP 500')) return 'El servidor encontró un error interno. Intenta de nuevo más tarde.';
+  return raw;
+}
+
 export default function StudentsTable({ students }: Props) {
   const [auditMap, setAuditMap] = useState<Record<string, AuditState>>({});
 
   function getState(id: string): AuditState {
-    return auditMap[id] ?? { loading: false, result: null, error: null, expanded: false };
+    return auditMap[id] ?? { loading: false, result: null, warning: null, error: null, expanded: false };
   }
 
   function setState(id: string, patch: Partial<AuditState>) {
@@ -38,14 +58,19 @@ export default function StudentsTable({ students }: Props) {
   }
 
   async function handleAudit(studentId: string) {
-    setState(studentId, { loading: true, error: null, expanded: false });
+    setState(studentId, { loading: true, error: null, warning: null, expanded: false });
     try {
-      const { audit } = await auditStudent(studentId);
-      setState(studentId, { loading: false, result: audit, expanded: true });
+      const { audit, warning } = await auditStudent(studentId);
+      setState(studentId, {
+        loading: false,
+        result: audit,
+        warning: warning ?? null,
+        expanded: true,
+      });
     } catch (err) {
       setState(studentId, {
         loading: false,
-        error: err instanceof Error ? err.message : 'Error desconocido',
+        error: friendlyError(err instanceof Error ? err.message : 'Error desconocido'),
       });
     }
   }
@@ -72,8 +97,8 @@ export default function StudentsTable({ students }: Props) {
           {students.map(s => {
             const state = getState(s.id);
             return (
-              <>
-                <tr key={s.id} style={tableStyles.tr}>
+              <Fragment key={s.id}>
+                <tr style={tableStyles.tr}>
                   <td style={tableStyles.td}>{s.nombre}</td>
                   <td style={tableStyles.td}>{s.correo_institucional}</td>
 
@@ -110,7 +135,7 @@ export default function StudentsTable({ students }: Props) {
                   </td>
 
                   <td style={tableStyles.td}>
-                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
                       {s.id_drive ? (
                         <button
                           onClick={() => handleAudit(s.id)}
@@ -120,7 +145,9 @@ export default function StudentsTable({ students }: Props) {
                           {state.loading ? 'Auditando…' : 'Auditar'}
                         </button>
                       ) : (
-                        <span style={tableStyles.muted} title="Sin id_drive">N/A</span>
+                        <span style={{ ...tableStyles.muted, fontSize: '0.8rem' }}>
+                          Sin carpeta Drive
+                        </span>
                       )}
                       {state.result && (
                         <button onClick={() => toggleExpand(s.id)} style={btnStyles.ghost}>
@@ -129,9 +156,10 @@ export default function StudentsTable({ students }: Props) {
                       )}
                     </div>
                     {state.error && (
-                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#dc2626' }}>
-                        {state.error}
-                      </p>
+                      <p style={msgStyles.error}>{state.error}</p>
+                    )}
+                    {state.warning && (
+                      <p style={msgStyles.warning}>{state.warning}</p>
                     )}
                   </td>
 
@@ -141,13 +169,13 @@ export default function StudentsTable({ students }: Props) {
                 </tr>
 
                 {state.expanded && state.result && (
-                  <tr key={`${s.id}-detail`}>
+                  <tr>
                     <td colSpan={7} style={detailStyles.cell}>
                       <AuditDetail result={state.result} />
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             );
           })}
         </tbody>
@@ -161,19 +189,25 @@ export default function StudentsTable({ students }: Props) {
 function AuditDetail({ result }: { result: DriveAuditResult }) {
   const ts = new Date(result.runAt).toLocaleString('es-MX');
 
+  const summaryText = result.fileCount === 0
+    ? 'No se encontraron archivos en la carpeta de Drive del estudiante.'
+    : `Se encontraron ${result.fileCount} archivo${result.fileCount !== 1 ? 's' : ''} en la carpeta.`;
+
   return (
     <div style={detailStyles.panel}>
       <div style={detailStyles.header}>
         <strong>Detalle de auditoría</strong>
         <span style={{ color: '#94a3b8', fontSize: '0.8rem', marginLeft: '1rem' }}>
-          {ts} · {result.fileCount} archivo{result.fileCount !== 1 ? 's' : ''}
+          {ts}
         </span>
       </div>
 
+      <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', color: '#475569' }}>{summaryText}</p>
+
       <div style={detailStyles.checks}>
-        <CheckItem ok={result.checks.hasAnyFile} label="Carpeta no vacía" />
-        <CheckItem ok={result.checks.hasSpreadsheet} label="Hoja de cálculo presente" />
-        <CheckItem ok={result.checks.hasPdf} label="Archivo PDF presente" />
+        <CheckItem ok={result.checks.hasAnyFile} label="Carpeta con archivos" />
+        <CheckItem ok={result.checks.hasSpreadsheet} label="Hoja de cálculo" />
+        <CheckItem ok={result.checks.hasPdf} label="Archivo PDF" />
       </div>
 
       {result.spreadsheets.length > 0 && (
@@ -195,9 +229,7 @@ function AuditDetail({ result }: { result: DriveAuditResult }) {
 function CheckItem({ ok, label }: { ok: boolean; label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}>
-      <span style={{ color: ok ? '#16a34a' : '#dc2626', fontWeight: 700 }}>
-        {ok ? '✓' : '✗'}
-      </span>
+      <span style={{ color: ok ? '#16a34a' : '#dc2626', fontWeight: 700 }}>{ok ? '✓' : '✗'}</span>
       <span style={{ color: ok ? '#166534' : '#991b1b' }}>{label}</span>
     </div>
   );
@@ -236,6 +268,11 @@ const badgeBase: CSSProperties = {
   fontWeight: 600,
 };
 
+const msgStyles = {
+  error: { margin: '0.3rem 0 0', fontSize: '0.75rem', color: '#dc2626', maxWidth: '240px' } satisfies CSSProperties,
+  warning: { margin: '0.3rem 0 0', fontSize: '0.75rem', color: '#a16207', maxWidth: '240px' } satisfies CSSProperties,
+};
+
 const btnStyles = {
   base: {
     padding: '0.3rem 0.65rem',
@@ -247,10 +284,7 @@ const btnStyles = {
     fontSize: '0.8rem',
     fontWeight: 600,
   } satisfies CSSProperties,
-  disabled: {
-    opacity: 0.6,
-    cursor: 'not-allowed',
-  } satisfies CSSProperties,
+  disabled: { opacity: 0.6, cursor: 'not-allowed' } satisfies CSSProperties,
   ghost: {
     padding: '0.3rem 0.65rem',
     background: 'transparent',
@@ -263,22 +297,8 @@ const btnStyles = {
 };
 
 const tableStyles: Record<string, CSSProperties> = {
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    fontSize: '0.875rem',
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    overflow: 'hidden',
-  },
-  th: {
-    textAlign: 'left',
-    padding: '0.75rem 1rem',
-    background: '#f1f5f9',
-    fontWeight: 600,
-    borderBottom: '1px solid #e2e8f0',
-    whiteSpace: 'nowrap',
-  },
+  table: { width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' },
+  th: { textAlign: 'left', padding: '0.75rem 1rem', background: '#f1f5f9', fontWeight: 600, borderBottom: '1px solid #e2e8f0', whiteSpace: 'nowrap' },
   tr: { borderBottom: '1px solid #f1f5f9' },
   td: { padding: '0.75rem 1rem', verticalAlign: 'middle' },
   link: { color: '#3b82f6', textDecoration: 'none' },
@@ -286,26 +306,8 @@ const tableStyles: Record<string, CSSProperties> = {
 };
 
 const detailStyles: Record<string, CSSProperties> = {
-  cell: {
-    padding: 0,
-    borderBottom: '1px solid #e2e8f0',
-    background: '#f8fafc',
-  },
-  panel: {
-    padding: '1rem 1.25rem',
-    borderLeft: '3px solid #3b82f6',
-    margin: '0.5rem 1rem',
-    background: '#fff',
-    borderRadius: '0 6px 6px 0',
-  },
-  header: {
-    marginBottom: '0.75rem',
-    fontSize: '0.875rem',
-  },
-  checks: {
-    display: 'flex',
-    gap: '1.5rem',
-    flexWrap: 'wrap',
-    marginBottom: '0.5rem',
-  },
+  cell: { padding: 0, borderBottom: '1px solid #e2e8f0', background: '#f8fafc' },
+  panel: { padding: '1rem 1.25rem', borderLeft: '3px solid #3b82f6', margin: '0.5rem 1rem', background: '#fff', borderRadius: '0 6px 6px 0' },
+  header: { marginBottom: '0.5rem', fontSize: '0.875rem' },
+  checks: { display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' },
 };

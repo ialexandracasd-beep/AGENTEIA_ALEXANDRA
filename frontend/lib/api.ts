@@ -136,6 +136,7 @@ export interface AuditStudentResponse {
   studentId: string;
   studentName: string;
   audit: DriveAuditResult;
+  warning?: string;
 }
 
 // ── Sheets ────────────────────────────────────────────────────────────────────

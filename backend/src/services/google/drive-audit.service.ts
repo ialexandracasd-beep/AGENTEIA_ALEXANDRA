@@ -1,5 +1,6 @@
 import { listFilesInFolder } from './drive.service';
 import { DriveAuditResult, DriveAuditStatus } from '../../types/audit.types';
+import { env } from '../../config/env';
 
 const MIME_SPREADSHEET = 'application/vnd.google-apps.spreadsheet';
 const MIME_PDF = 'application/pdf';
@@ -8,6 +9,23 @@ const DRIVE_TIMEOUT_MS = 15_000;
 export function extractFolderId(idOrUrl: string): string {
   const match = idOrUrl.match(/\/folders\/([a-zA-Z0-9_-]+)/);
   return match ? match[1] : idOrUrl.trim();
+}
+
+function classifyDriveError(err: unknown): Error {
+  const code = (err as { code?: number }).code;
+  const msg = ((err as Error).message ?? '').toLowerCase();
+
+  if (code === 403 || msg.includes('forbidden') || msg.includes('permission')) {
+    return new Error(
+      `Sin acceso a la carpeta de Drive. Comparte la carpeta con la cuenta de servicio: ${env.google.serviceAccountEmail}`,
+    );
+  }
+  if (code === 404 || msg.includes('not found') || msg.includes('notfound')) {
+    return new Error(
+      'No se encontró la carpeta de Drive. Verifica que el ID o URL en el campo id_drive sea correcto.',
+    );
+  }
+  return err instanceof Error ? err : new Error(String(err));
 }
 
 export async function auditStudentFolder(idDrive: string): Promise<DriveAuditResult> {
@@ -21,9 +39,11 @@ export async function auditStudentFolder(idDrive: string): Promise<DriveAuditRes
     files = await listFilesInFolder(folderId, controller.signal);
   } catch (err) {
     if (controller.signal.aborted) {
-      throw new Error('Google Drive no respondió a tiempo (timeout 15 s). Verifica que la cuenta de servicio tenga acceso a la carpeta.');
+      throw new Error(
+        'Google Drive tardó demasiado en responder. Verifica tu conexión e intenta de nuevo.',
+      );
     }
-    throw err;
+    throw classifyDriveError(err);
   } finally {
     clearTimeout(timer);
   }
@@ -55,14 +75,5 @@ export async function auditStudentFolder(idDrive: string): Promise<DriveAuditRes
     status = 'findings';
   }
 
-  return {
-    folderId,
-    fileCount: files.length,
-    spreadsheets,
-    pdfs,
-    otherFiles,
-    checks,
-    status,
-    runAt: new Date().toISOString(),
-  };
+  return { folderId, fileCount: files.length, spreadsheets, pdfs, otherFiles, checks, status, runAt: new Date().toISOString() };
 }
