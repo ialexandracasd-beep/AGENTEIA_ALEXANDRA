@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '../../config/supabase';
 import { DriveAuditResult, DriveAuditStatus } from '../../types/audit.types';
+import { logger } from '../../utils/logger';
 
 const SUPABASE_TIMEOUT_MS = 10_000;
 
@@ -16,7 +17,6 @@ export interface DriveAuditRow {
   created_at: string;
 }
 
-// PromiseLike cubre tanto Promise como el thenable de Supabase (PostgrestBuilder)
 function withTimeout<T>(thenable: PromiseLike<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
     Promise.resolve(thenable),
@@ -32,25 +32,33 @@ function withTimeout<T>(thenable: PromiseLike<T>, ms: number, label: string): Pr
 export async function saveAuditResult(
   studentId: string,
   result: DriveAuditResult,
-): Promise<DriveAuditRow> {
-  const query = supabaseAdmin
-    .from('drive_audits')
-    .insert({
-      student_id: studentId,
-      folder_id: result.folderId,
-      file_count: result.fileCount,
-      spreadsheets: result.spreadsheets,
-      pdfs: result.pdfs,
-      other_files: result.otherFiles,
-      checks: result.checks,
-      status: result.status,
-    })
-    .select()
-    .single();
+): Promise<void> {
+  const payload = {
+    student_id: studentId,
+    folder_id: result.folderId,
+    file_count: result.fileCount,
+    spreadsheets: result.spreadsheets,
+    pdfs: result.pdfs,
+    other_files: result.otherFiles,
+    checks: result.checks,
+    status: result.status,
+  };
 
-  const { data, error } = await withTimeout(query, SUPABASE_TIMEOUT_MS, 'Supabase');
-  if (error) throw new Error(error.message);
-  return data as DriveAuditRow;
+  logger.info(`saveAuditResult → studentId=${studentId} status=${result.status} files=${result.fileCount}`);
+
+  // Insert sin .select() para evitar problemas con permisos de retorno
+  const { error } = await withTimeout(
+    supabaseAdmin.from('drive_audits').insert(payload),
+    SUPABASE_TIMEOUT_MS,
+    'Supabase drive_audits insert',
+  );
+
+  if (error) {
+    logger.error(`saveAuditResult error → code=${error.code} msg=${error.message} details=${error.details}`);
+    throw new Error(error.message);
+  }
+
+  logger.info(`saveAuditResult OK → studentId=${studentId}`);
 }
 
 export async function getLatestAudit(studentId: string): Promise<DriveAuditRow | null> {
@@ -62,7 +70,7 @@ export async function getLatestAudit(studentId: string): Promise<DriveAuditRow |
     .limit(1)
     .single();
 
-  const { data, error } = await withTimeout(query, SUPABASE_TIMEOUT_MS, 'Supabase');
+  const { data, error } = await withTimeout(query, SUPABASE_TIMEOUT_MS, 'Supabase getLatestAudit');
   if (error) return null;
   return data as DriveAuditRow;
 }
