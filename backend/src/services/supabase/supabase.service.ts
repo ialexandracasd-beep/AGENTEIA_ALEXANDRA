@@ -1,4 +1,4 @@
-import { supabase } from '../../config/supabase';
+import { supabaseAdmin as supabase } from '../../config/supabase';
 import { Student, CreateStudentDto } from '../../types/student.types';
 import { StructuralResult, MethodologicalResult, ReviewResult, ReviewType } from '../../types/review.types';
 

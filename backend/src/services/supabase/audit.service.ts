@@ -1,4 +1,4 @@
-import { supabase } from '../../config/supabase';
+import { supabaseAdmin } from '../../config/supabase';
 import { DriveAuditResult, DriveAuditStatus } from '../../types/audit.types';
 
 const SUPABASE_TIMEOUT_MS = 10_000;
@@ -33,7 +33,7 @@ export async function saveAuditResult(
   studentId: string,
   result: DriveAuditResult,
 ): Promise<DriveAuditRow> {
-  const query = supabase
+  const query = supabaseAdmin
     .from('drive_audits')
     .insert({
       student_id: studentId,
@@ -54,7 +54,7 @@ export async function saveAuditResult(
 }
 
 export async function getLatestAudit(studentId: string): Promise<DriveAuditRow | null> {
-  const query = supabase
+  const query = supabaseAdmin
     .from('drive_audits')
     .select('*')
     .eq('student_id', studentId)
