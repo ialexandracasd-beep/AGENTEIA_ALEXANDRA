@@ -55,7 +55,10 @@ export const env = {
   google: {
     projectId: raw.GOOGLE_PROJECT_ID,
     serviceAccountEmail: raw.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    privateKey: raw.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    privateKey: raw.GOOGLE_PRIVATE_KEY
+      .replace(/^["']|["']$/g, '')   // quita comillas envolventes si Render las incluye
+      .replace(/\\n/g, '\n')          // \n literal → salto de línea real
+      .trim(),
     driveRootFolderId: raw.GOOGLE_DRIVE_ROOT_FOLDER_ID,
     templateSheetId: raw.GOOGLE_TEMPLATE_SHEET_ID,
     teacherEmail: raw.GOOGLE_TEACHER_EMAIL,
