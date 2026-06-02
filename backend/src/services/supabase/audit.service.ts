@@ -2,8 +2,6 @@ import { supabaseAdmin } from '../../config/supabase';
 import { DriveAuditResult, DriveAuditStatus } from '../../types/audit.types';
 import { logger } from '../../utils/logger';
 
-const SUPABASE_TIMEOUT_MS = 10_000;
-
 export interface DriveAuditRow {
   id: string;
   student_id: string;
@@ -17,16 +15,9 @@ export interface DriveAuditRow {
   created_at: string;
 }
 
-function withTimeout<T>(thenable: PromiseLike<T>, ms: number, label: string): Promise<T> {
-  return Promise.race([
-    Promise.resolve(thenable),
-    new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`${label} no respondió a tiempo (timeout ${ms / 1000} s)`)),
-        ms,
-      ),
-    ),
-  ]);
+// Elimina undefined y valores no serializables para que Supabase reciba JSON limpio
+function toJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
 }
 
 export async function saveAuditResult(
@@ -34,43 +25,69 @@ export async function saveAuditResult(
   result: DriveAuditResult,
 ): Promise<void> {
   const payload = {
-    student_id: studentId,
-    folder_id: result.folderId,
-    file_count: result.fileCount,
-    spreadsheets: result.spreadsheets,
-    pdfs: result.pdfs,
-    other_files: result.otherFiles,
-    checks: result.checks,
-    status: result.status,
+    student_id:  studentId,
+    folder_id:   result.folderId,
+    file_count:  result.fileCount,
+    spreadsheets: toJson(result.spreadsheets),
+    pdfs:         toJson(result.pdfs),
+    other_files:  toJson(result.otherFiles),
+    checks:       toJson(result.checks),
+    status:       result.status,
   };
 
-  logger.info(`saveAuditResult → studentId=${studentId} status=${result.status} files=${result.fileCount}`);
-
-  // Insert sin .select() para evitar problemas con permisos de retorno
-  const { error } = await withTimeout(
-    supabaseAdmin.from('drive_audits').insert(payload),
-    SUPABASE_TIMEOUT_MS,
-    'Supabase drive_audits insert',
+  // Log completo del payload para diagnosticar en Render
+  logger.info(
+    `saveAuditResult payload → ` +
+    `student_id=${payload.student_id} ` +
+    `folder_id=${payload.folder_id} ` +
+    `status=${payload.status} ` +
+    `file_count=${payload.file_count} ` +
+    `spreadsheets=${payload.spreadsheets.length} ` +
+    `pdfs=${payload.pdfs.length} ` +
+    `other_files=${payload.other_files.length} ` +
+    `checks=${JSON.stringify(payload.checks)}`,
   );
 
-  if (error) {
-    logger.error(`saveAuditResult error → code=${error.code} msg=${error.message} details=${error.details}`);
-    throw new Error(error.message);
+  // Await directo: evita el patrón withTimeout(thenable) que en Supabase JS v2
+  // puede convertir un resolve-con-error en un reject, ocultando el código de error.
+  let insertError: { code: string; message: string; details: unknown; hint?: string } | null = null;
+
+  try {
+    const { error } = await supabaseAdmin.from('drive_audits').insert(payload);
+    insertError = error;
+  } catch (err) {
+    // Error de red o excepción inesperada del cliente Supabase
+    logger.error(`saveAuditResult exception (no llegó a Supabase) → ${(err as Error).message}`);
+    throw err;
   }
 
-  logger.info(`saveAuditResult OK → studentId=${studentId}`);
+  if (insertError) {
+    logger.error(
+      `saveAuditResult FAILED → ` +
+      `code=${insertError.code} ` +
+      `msg=${insertError.message} ` +
+      `details=${JSON.stringify(insertError.details)} ` +
+      `hint=${insertError.hint ?? 'none'}`,
+    );
+    throw new Error(insertError.message);
+  }
+
+  logger.info(`saveAuditResult OK → student_id=${studentId}`);
 }
 
 export async function getLatestAudit(studentId: string): Promise<DriveAuditRow | null> {
-  const query = supabaseAdmin
-    .from('drive_audits')
-    .select('*')
-    .eq('student_id', studentId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single();
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('drive_audits')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
 
-  const { data, error } = await withTimeout(query, SUPABASE_TIMEOUT_MS, 'Supabase getLatestAudit');
-  if (error) return null;
-  return data as DriveAuditRow;
+    if (error) return null;
+    return data as DriveAuditRow;
+  } catch {
+    return null;
+  }
 }
