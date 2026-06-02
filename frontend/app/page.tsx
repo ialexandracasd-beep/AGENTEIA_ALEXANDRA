@@ -26,22 +26,28 @@ export default async function HomePage() {
           .hero-right   { display: none; }
           .modules-grid { grid-template-columns: 1fr; }
         }
+        @media (max-width: 640px) {
+          .hero-section  { padding: 1.75rem 1.5rem !important; }
+          .kpi-grid      { grid-template-columns: repeat(2, 1fr) !important; }
+          .est-body      { padding: 1.5rem !important; }
+          .hero-title    { font-size: 1.5rem !important; }
+        }
       `}</style>
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section style={S.hero}>
+      <section className="hero-section" style={S.hero}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 70% 30%, rgba(59,130,246,0.15) 0%, transparent 60%), radial-gradient(circle at 20% 80%, rgba(99,102,241,0.1) 0%, transparent 50%)', pointerEvents: 'none' }} />
 
         <div className="hero-inner" style={{ position: 'relative', zIndex: 1 }}>
           {/* Left: copy */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <span style={S.heroPill}>Para docentes universitarias · IA aplicada a la metodología</span>
-            <h1 style={S.heroTitle}>
+            <h1 className="hero-title" style={S.heroTitle}>
               De la carpeta de Drive al hallazgo, en segundos
             </h1>
             <p style={S.heroSub}>
-              AgenteIA Alexandra automatiza la auditoría de entregas, detecta carpetas incompletas y
-              prepara el camino hacia revisiones de contenido con IA — todo sin cambiar tu flujo de trabajo.
+              Audita en lote carpetas de Drive, detecta quién entregó y quién no, y prepara
+              el terreno para revisiones con IA — sin cambiar tu flujo actual.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <a href="/students" style={S.ctaPrimary}>
@@ -96,7 +102,7 @@ export default async function HomePage() {
 
       {/* ── KPIs ──────────────────────────────────────────────────────────── */}
       <section style={{ marginBottom: '2.5rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1rem' }}>
+        <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1rem' }}>
           <KpiCard value={total}     label="Estudiantes"          sub="Total registrados"       color="#1d4ed8" bg="#eff6ff" icon={iconPeople}  />
           <KpiCard value={withDrive} label="Carpetas Drive"       sub="Listas para auditar"     color="#15803d" bg="#f0fdf4" icon={iconFolder}  />
           <KpiCard value={audits}    label="Auditorías"           sub="Realizadas en total"     color="#6d28d9" bg="#f5f3ff" icon={iconCheck}   />
@@ -116,7 +122,7 @@ export default async function HomePage() {
         <div className="modules-grid">
           {/* Estudiantes — protagonista */}
           <div style={{ ...S.card, borderTop: '3px solid #1d4ed8' }}>
-            <div style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div className="est-body" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
                 <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'linear-gradient(135deg, #eff6ff, #dbeafe)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1d4ed8' }}>
                   {iconPeopleLg}
@@ -129,8 +135,8 @@ export default async function HomePage() {
 
               <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>Gestión de Estudiantes</h3>
               <p style={{ margin: '0 0 1.25rem', fontSize: '0.9rem', color: '#475569', lineHeight: 1.6 }}>
-                El corazón del sistema. Organiza tu base de estudiantes, audita en lote sus carpetas de Drive
-                y detecta quién tiene entregas completas y quién necesita atención.
+                Importa tu base desde Excel, audita en lote las carpetas de Drive y detecta quién
+                tiene entrega completa y quién requiere seguimiento — en minutos.
               </p>
 
               <ul style={{ margin: '0 0 1.5rem', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.6rem', flex: 1 }}>

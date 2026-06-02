@@ -19,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; background: #f0f4f8; }
           .nav-link { color: rgba(255,255,255,0.7); text-decoration: none; padding: 0.4rem 0.875rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; transition: color 0.15s, background 0.15s; }
           .nav-link:hover { color: #fff; background: rgba(255,255,255,0.12); }
+          .nav-desktop { display: flex; gap: 0.125rem; align-items: center; margin-left: auto; }
           .module-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
           .module-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(15,36,68,0.14) !important; }
           .kpi-card { transition: box-shadow 0.15s ease; }
@@ -26,6 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .cta-btn { transition: filter 0.15s ease, transform 0.1s ease; }
           .cta-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
           .activity-row:hover { background: #f8fafc; }
+          @media (max-width: 600px) {
+            .nav-desktop { display: none !important; }
+            main { padding: 1.25rem !important; }
+          }
         `}</style>
       </head>
       <body>
@@ -47,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 Beta
               </span>
             </a>
-            <nav style={{ marginLeft: 'auto', display: 'flex', gap: '0.125rem', alignItems: 'center' }}>
+            <nav className="nav-desktop">
               {NAV_LINKS.map(({ label, href }) => (
                 <a key={href} href={href} className="nav-link">{label}</a>
               ))}
