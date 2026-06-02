@@ -45,6 +45,25 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return json.data as T;
 }
 
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+export interface DashboardStats {
+  totalStudents: number;
+  studentsWithDrive: number;
+  totalAudits: number;
+  byStatus: Record<string, number>;
+  recentAudits: Array<{
+    studentName: string;
+    status: string;
+    fileCount: number;
+    createdAt: string;
+  }>;
+}
+
+export function getDashboardStats(): Promise<DashboardStats> {
+  return request<DashboardStats>('/dashboard/stats', { cache: 'no-store' });
+}
+
 // ── Health ────────────────────────────────────────────────────────────────────
 
 export interface HealthResponse {
