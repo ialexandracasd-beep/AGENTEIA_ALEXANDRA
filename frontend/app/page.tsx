@@ -11,6 +11,8 @@ export default async function HomePage() {
   const audits    = stats?.totalAudits       ?? null;
   const findings  = stats?.byStatus?.findings ?? null;
 
+  const hasActivity = (stats?.recentAudits?.length ?? 0) > 0;
+
   const auditPct = (audits !== null && withDrive !== null && withDrive > 0)
     ? Math.min(100, Math.round((audits / withDrive) * 100))
     : null;
@@ -194,12 +196,14 @@ export default async function HomePage() {
       <section style={{ marginBottom: '1rem' }}>
         <div style={S.sectionRow}>
           <div>
-            <h2 style={S.sectionTitle}>Actividad reciente</h2>
-            <p style={S.sectionSub}>Últimas auditorías de carpetas de Drive</p>
+            <h2 style={S.sectionTitle}>{hasActivity ? 'Actividad reciente' : 'Cómo usar el sistema'}</h2>
+            <p style={S.sectionSub}>{hasActivity ? 'Últimas auditorías de carpetas de Drive' : 'Tres pasos para empezar desde hoy'}</p>
           </div>
-          <a href="/students" style={{ fontSize: '0.8rem', color: '#2563eb', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>
-            Ver todas →
-          </a>
+          {hasActivity && (
+            <a href="/students" style={{ fontSize: '0.8rem', color: '#2563eb', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>
+              Ver todas →
+            </a>
+          )}
         </div>
 
         <div style={S.card}>
@@ -235,19 +239,27 @@ export default async function HomePage() {
               </div>
             ))
           ) : (
-            <div style={{ padding: '3.5rem 2rem', textAlign: 'center' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', color: '#94a3b8' }}>
-                {iconAuditLg}
+            <div style={{ padding: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                {([
+                  { num: '1', title: 'Importa estudiantes',  desc: 'Carga tu base desde Excel con nombres, correos y carpetas de Drive.' },
+                  { num: '2', title: 'Lanza la auditoría',   desc: 'Un clic audita todas las carpetas en lote, sin revisarlas una a una.' },
+                  { num: '3', title: 'Lee los hallazgos',    desc: 'Aprobado, Con hallazgos o Sin archivos — por cada estudiante, al instante.' },
+                ] as { num: string; title: string; desc: string }[]).map(({ num, title, desc }) => (
+                  <div key={num} style={{ padding: '1.125rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#1d4ed8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800, flexShrink: 0 }}>{num}</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>{title}</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.55 }}>{desc}</p>
+                  </div>
+                ))}
               </div>
-              <p style={{ margin: '0 0 0.35rem', fontWeight: 700, fontSize: '0.95rem', color: '#374151' }}>
-                Sin auditorías todavía
-              </p>
-              <p style={{ margin: '0 0 1.5rem', fontSize: '0.85rem', color: '#9ca3af', maxWidth: '320px', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.55 }}>
-                Cuando audites carpetas de Drive desde el módulo de Estudiantes, los resultados aparecerán aquí.
-              </p>
-              <a href="/students" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.6rem 1.25rem', background: '#1d4ed8', color: '#fff', textDecoration: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 700 }}>
-                Empezar ahora →
-              </a>
+              <div style={{ textAlign: 'center' }}>
+                <a href="/students" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 1.25rem', background: '#1d4ed8', color: '#fff', textDecoration: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700 }}>
+                  Ir a Estudiantes y comenzar →
+                </a>
+              </div>
             </div>
           )}
         </div>

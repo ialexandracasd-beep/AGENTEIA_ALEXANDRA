@@ -22,14 +22,10 @@ export async function runStudentAudit(req: Request, res: Response) {
 
     const auditResult = await auditStudentFolder(student.id_drive);
 
-    // Guardar en Supabase de forma no bloqueante: si falla, igual devolvemos el resultado
-    let warning: string | undefined;
-    try {
-      await saveAuditResult(student.id, auditResult);
-    } catch (saveErr) {
-      warning = 'Auditoría completada, pero no se pudo guardar el registro. Intenta de nuevo en unos minutos.';
-      logger.error('saveAuditResult failed (non-blocking):', saveErr);
-    }
+    // Guardado best-effort: falla silenciosamente para no afectar UX
+    saveAuditResult(student.id, auditResult).catch(err =>
+      logger.error('saveAuditResult failed (silent):', err),
+    );
 
     logger.info(`Drive audit done: ${student.nombre} — ${auditResult.status}, ${auditResult.fileCount} archivos`);
 
@@ -37,7 +33,6 @@ export async function runStudentAudit(req: Request, res: Response) {
       studentId: student.id,
       studentName: student.nombre,
       audit: auditResult,
-      ...(warning && { warning }),
     });
   } catch (err) {
     logger.error('Drive audit error:', err);
