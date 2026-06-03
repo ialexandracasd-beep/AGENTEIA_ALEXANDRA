@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useState, useRef, useEffect, type CSSProperties } from 'react';
-import { auditStudent, type StudentDTO, type DriveAuditResult } from '@/lib/api';
+import { auditStudent, getStudentAudit, type StudentDTO, type DriveAuditResult } from '@/lib/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -74,6 +74,24 @@ export default function StudentsTable({ students }: Props) {
   useEffect(() => {
     if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected;
   }, [someSelected]);
+
+  // Precarga historial de drive_audits al montar para que las filas reflejen
+  // el estado guardado sin necesidad de re-auditar.
+  useEffect(() => {
+    students
+      .filter(s => s.id_drive)
+      .forEach(s => {
+        if (getAudit(s.id).loading) return;
+        getStudentAudit(s.id)
+          .then(resp => {
+            if (resp?.audit) {
+              patchAudit(s.id, { loading: false, result: resp.audit, warning: null, error: null });
+            }
+          })
+          .catch(() => { /* la precarga del historial nunca rompe la tabla */ });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── State helpers ───────────────────────────────────────────────────────────
 

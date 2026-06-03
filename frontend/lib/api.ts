@@ -130,6 +130,10 @@ export function auditStudent(studentId: string): Promise<AuditStudentResponse> {
   return request<AuditStudentResponse>(`/students/${studentId}/audit`, { method: 'POST' });
 }
 
+export function getStudentAudit(studentId: string): Promise<AuditStudentResponse | null> {
+  return request<AuditStudentResponse | null>(`/students/${studentId}/audit`, { cache: 'no-store' });
+}
+
 export interface DriveAuditFileInfo {
   id: string;
   name: string;
