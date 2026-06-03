@@ -15,7 +15,7 @@ export interface DriveAuditRow {
   created_at: string;
 }
 
-// Elimina undefined y valores no serializables para que Supabase reciba JSON limpio
+// Convierte undefined → ausente, normaliza JSONB antes del insert
 function toJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
@@ -25,9 +25,9 @@ export async function saveAuditResult(
   result: DriveAuditResult,
 ): Promise<void> {
   const payload = {
-    student_id:  studentId,
-    folder_id:   result.folderId,
-    file_count:  result.fileCount,
+    student_id:   studentId,
+    folder_id:    result.folderId,
+    file_count:   result.fileCount,
     spreadsheets: toJson(result.spreadsheets),
     pdfs:         toJson(result.pdfs),
     other_files:  toJson(result.otherFiles),
@@ -35,44 +35,38 @@ export async function saveAuditResult(
     status:       result.status,
   };
 
-  // Log completo del payload para diagnosticar en Render
+  // Log siempre antes del insert para diagnosticar en Render
   logger.info(
-    `saveAuditResult payload → ` +
-    `student_id=${payload.student_id} ` +
-    `folder_id=${payload.folder_id} ` +
+    `[AUDIT-SAVE] student_id=${payload.student_id} ` +
     `status=${payload.status} ` +
     `file_count=${payload.file_count} ` +
-    `spreadsheets=${payload.spreadsheets.length} ` +
-    `pdfs=${payload.pdfs.length} ` +
-    `other_files=${payload.other_files.length} ` +
-    `checks=${JSON.stringify(payload.checks)}`,
+    `folder_id=${payload.folder_id}`,
   );
 
-  // Await directo: evita el patrón withTimeout(thenable) que en Supabase JS v2
-  // puede convertir un resolve-con-error en un reject, ocultando el código de error.
-  let insertError: { code: string; message: string; details: unknown; hint?: string } | null = null;
+  let supabaseError: unknown = null;
 
   try {
     const { error } = await supabaseAdmin.from('drive_audits').insert(payload);
-    insertError = error;
+    supabaseError = error;
   } catch (err) {
-    // Error de red o excepción inesperada del cliente Supabase
-    logger.error(`saveAuditResult exception (no llegó a Supabase) → ${(err as Error).message}`);
+    logger.error(`[AUDIT-SAVE] excepción JS (no llegó a Supabase): ${(err as Error).message}`);
     throw err;
   }
 
-  if (insertError) {
+  if (supabaseError) {
+    // Loguea TODOS los campos del error, independientemente de su tipo
+    const e = supabaseError as Record<string, unknown>;
     logger.error(
-      `saveAuditResult FAILED → ` +
-      `code=${insertError.code} ` +
-      `msg=${insertError.message} ` +
-      `details=${JSON.stringify(insertError.details)} ` +
-      `hint=${insertError.hint ?? 'none'}`,
+      `[AUDIT-SAVE] INSERT FALLÓ — ` +
+      `code=${String(e['code'] ?? 'N/A')} ` +
+      `message=${String(e['message'] ?? 'N/A')} ` +
+      `details=${JSON.stringify(e['details'] ?? null)} ` +
+      `hint=${String(e['hint'] ?? 'none')}`,
     );
-    throw new Error(insertError.message);
+    throw new Error(String(e['message'] ?? 'Error inserting drive_audits'));
   }
 
-  logger.info(`saveAuditResult OK → student_id=${studentId}`);
+  logger.info(`[AUDIT-SAVE] OK — student_id=${studentId}`);
 }
 
 export async function getLatestAudit(studentId: string): Promise<DriveAuditRow | null> {
