@@ -31,6 +31,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             .nav-desktop { display: none !important; }
             main { padding: 1.25rem !important; }
           }
+          @media print {
+            header, .no-print { display: none !important; }
+            body { background: #fff !important; }
+            main { padding: 0 !important; max-width: 100% !important; }
+          }
         `}</style>
       </head>
       <body>

@@ -127,6 +127,50 @@ export async function saveAiReview(
   return data;
 }
 
+export interface ReviewListItem {
+  id: string;
+  studentId: string;
+  studentName: string;
+  reviewType: ReviewType;
+  overallScore: number | null;
+  coherenceScore: number | null;
+  feedback: string | null;
+  status: ReviewResult['status'];
+  createdAt: string;
+}
+
+type AiReviewJoined = {
+  id: string;
+  student_id: string;
+  review_type: string;
+  overall_score: number | null;
+  coherence_score: number | null;
+  feedback: string | null;
+  status: string;
+  created_at: string;
+  students: { nombre: string }[] | null;
+};
+
+export async function getAllReviews(): Promise<ReviewListItem[]> {
+  const { data, error } = await supabase
+    .from('ai_reviews')
+    .select('id, student_id, review_type, overall_score, coherence_score, feedback, status, created_at, students(nombre)')
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as AiReviewJoined[]).map(r => ({
+    id: r.id,
+    studentId: r.student_id,
+    studentName: r.students?.[0]?.nombre ?? 'Estudiante',
+    reviewType: r.review_type as ReviewType,
+    overallScore: r.overall_score,
+    coherenceScore: r.coherence_score,
+    feedback: r.feedback,
+    status: r.status as ReviewResult['status'],
+    createdAt: r.created_at,
+  }));
+}
+
 export async function getReviewsByStudent(studentId: string): Promise<ReviewResult[]> {
   const { data, error } = await supabase
     .from('ai_reviews')

@@ -189,3 +189,62 @@ export function submitReview(payload: SubmitReviewPayload): Promise<unknown> {
 export function getStudentReviews(studentId: string): Promise<unknown[]> {
   return request<unknown[]>(`/reviews/student/${studentId}`);
 }
+
+export interface ReviewListItem {
+  id: string;
+  studentId: string;
+  studentName: string;
+  reviewType: 'structural' | 'methodological' | 'full';
+  overallScore: number | null;
+  coherenceScore: number | null;
+  feedback: string | null;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  createdAt: string;
+}
+
+export interface SimpleReviewPayload {
+  studentId: string;
+  documentText: string;
+  reviewType: 'structural' | 'methodological' | 'full';
+  documentUrl?: string;
+}
+
+export interface SimpleReviewResult {
+  structural?: {
+    hasTitle: boolean; hasAbstract: boolean; hasIntroduction: boolean;
+    hasObjectives: boolean; hasMethodology: boolean; hasConclusions: boolean;
+    hasBibliography: boolean; missingElements: string[]; score: number; observations?: string;
+  };
+  methodological?: {
+    coherenceScore: number; objectivesAligned: boolean; methodologyJustified: boolean;
+    resultsConsistent: boolean; feedback: string; suggestions: string[]; overallScore: number;
+  };
+}
+
+export function listAllReviews(): Promise<ReviewListItem[]> {
+  return request<ReviewListItem[]>('/reviews', { cache: 'no-store' });
+}
+
+export function triggerSimpleReview(payload: SimpleReviewPayload): Promise<SimpleReviewResult> {
+  return request<SimpleReviewResult>('/reviews/simple', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+
+export interface ReportsSummary {
+  totalStudents: number;
+  studentsWithDrive: number;
+  totalAudits: number;
+  auditsByStatus: Record<string, number>;
+  reviewsCompleted: number;
+  reviewsPending: number;
+  avgReviewScore: number | null;
+  studentsAtRisk: Array<{ id: string; nombre: string; correo_institucional: string }>;
+}
+
+export function getReportsSummary(): Promise<ReportsSummary> {
+  return request<ReportsSummary>('/reports/summary', { cache: 'no-store' });
+}
